@@ -208,7 +208,6 @@ pub fn parse_toplevel(f: &mut File) -> Node {
         let z = parse_expression(f);
         x.push(z);
         parser_helper::skip(lexer::LexToken::PUNC(String::from(";")),f);
-        // f.index += 1;
     }
     Node::Prog(Box::new(x))
 }
