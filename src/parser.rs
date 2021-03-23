@@ -84,20 +84,10 @@ fn parse_if(f: &mut File) -> Node {
 }
 
 fn maybe_fndef(f: &mut File, n: Node) -> Node {
-    println!("Hi");
     if !matches!(n, Node::Call(..)) {
-        println!("no");
         return n;
     }
-    println!("{:?}", n);
-    // TODO: unmess
     if let Node::Call(name, args) = n.clone() {
-        println!("HELO");
-        /*
-        if f.tokens[f.index] == lexer::LexToken::PUNC(String::from("(")) {
-            println!("hi");
-            // let args = parser_helper::delimited(lexer::LexToken::PUNC(String::from("(")), lexer::LexToken::PUNC(String::from(")")), lexer::LexToken::PUNC(String::from(",")), f);
-            println!("THERE"); */
             if f.tokens[f.index] == lexer::LexToken::PUNC(String::from(":")) {
                 f.index += 1;
                 if let lexer::LexToken::ID(_) = f.tokens[f.index] {
@@ -112,34 +102,11 @@ fn maybe_fndef(f: &mut File, n: Node) -> Node {
                     println!("Expected a type!");
                     panic!();
                 }
-                /*
-                println!("HERE");
-                if f.tokens[f.index] == lexer::LexToken::PUNC(String::from("{")) {
-                    let x = parse_prog(f);
-                    return Node::FnDef(name, Box::new(*args), lexer::LexToken::FN_NULL_TYPE, Box::new(x));
-                } else {
-                    return Node::Call(name, Box::new(*args));
-                }
-                */
             } else if f.tokens[f.index] == lexer::LexToken::PUNC(String::from("{")) {
                 return Node::FnDef(name, args, lexer::LexToken::FN_NULL_TYPE, Box::new(parse_prog(f)));
             } else {
                 return n
-            }
-            /*
-            f.index += 1;
-            if !matches!(f.tokens[f.index], lexer::LexToken::ID(_)) {
-                let typ = f.tokens[f.index].clone();
-                f.index += 1;
-                if f.tokens[f.index] != lexer::LexToken::PUNC(String::from("{")) {
-                    println!("Expected codeblock after function definition ({{)");
-                    panic!();
-                }
-                let x = parse_prog(f);
-                return Node::FnDef(name, Box::new(*args), typ, Box::new(x));
-            }
-            println!("Expected a valid type");
-            panic!();
+            }c!();
             */
     } else {
         return n;
@@ -219,9 +186,7 @@ pub fn parse_expression(f: &mut File) -> Node {
     let y = parse_atom(f);
     let x = maybe_binary(f, y, 0);
     let z = maybe_call(f, x);
-    println!("THI {:?}", z);
     return maybe_fndef(f, z);
-    z
 }
 fn parse_prog(f: &mut File) -> Node {
     if f.tokens[f.index] != lexer::LexToken::PUNC(String::from("{")) {
