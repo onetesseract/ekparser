@@ -106,8 +106,7 @@ fn maybe_fndef(f: &mut File, n: Node) -> Node {
                 return Node::FnDef(name, args, lexer::LexToken::FN_NULL_TYPE, Box::new(parse_prog(f)));
             } else {
                 return n
-            }c!();
-            */
+            }
     } else {
         return n;
     }
