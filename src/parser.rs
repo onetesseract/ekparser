@@ -31,6 +31,7 @@ pub enum Node {
 pub enum Literal {
     Num(f64),
     Bool(bool),
+    String(String),
     Undef,
     None,
 }
@@ -45,7 +46,8 @@ const OPS: [&str; 14] = ["=", "||", "&&", /* now all 7 */ "<", ">", "<=", ">=", 
 const OP_STRENGTH: [usize; 14] = [1, 2, 3, 7, 7, 7, 7, 7, 7, 10, 10, 20, 20, 20];
 
 fn parse_bool(f: &mut File) -> Node {
-    Node::Literal(Literal::Bool(f.tokens[f.index] == lexer::LexToken::ID(String::from("true"))))
+    f.index += 1;
+    Node::Literal(Literal::Bool(f.tokens[f.index-1] == lexer::LexToken::ID(String::from("true"))))
 }
 fn parse_dec(f: &mut File) -> Node {
     if !parser_helper::check_discriminant(&f.tokens[f.index], &lexer::LexToken::ID(String::new())) {
@@ -170,6 +172,10 @@ fn pa_helper(f: &mut File) -> Node {
         f.index+=1;
         return Node::Literal(Literal::Num(x));
     }
+    if let lexer::LexToken::STRING(x) = f.tokens[f.index].clone() {
+        f.index+=1;
+        return Node::Literal(Literal::String(x));
+    }
     if let lexer::LexToken::ID(x) = f.tokens[f.index].clone() {
         f.index+=1;
         return Node::ID(x)
@@ -206,6 +212,7 @@ pub fn parse_toplevel(f: &mut File) -> Node {
     while f.tokens[f.index] != lexer::LexToken::EOF {
         let z = parse_expression(f);
         x.push(z);
+        // todo: println!("TP: {:?}", x);
         parser_helper::skip(lexer::LexToken::PUNC(String::from(";")),f);
     }
     Node::Prog(Box::new(x))

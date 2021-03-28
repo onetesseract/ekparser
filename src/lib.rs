@@ -20,6 +20,7 @@ pub fn new_tree(file: &str) -> parser::Node {
         x = lexer::read_next(&mut s);
         tokens.push(x.clone());
     }
+    // println!("Tokens: {:?}", tokens);
     let mut _file = parser::File{tokens: tokens, index: 0};
     parser::parse_toplevel(&mut _file)
 }

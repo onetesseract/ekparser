@@ -1,6 +1,10 @@
 const PUNCS: [&str; 11] = ["{", "}", "::", ":", ";", ".", ",", "(", "[", "]", ")"];
 const OPS: [&str; 14] = ["=", "||", "&&", /* now all 7 */ "<", ">", "<=", ">=", "==", "!=", /* all 10 */ "+", "-", /* 20s */ "*", "/", "%"];
 
+const ESC_MEANING_CHARS: [char; 1] = ['n']; // define things like \n
+const ESC_MEANING_CHARS_MEANING: [char; 1] = ['\n']; // define things like \n
+
+
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum CharClass {
@@ -23,6 +27,7 @@ pub enum LexToken {
     OP(String),
     SL_COMMENT(String),
     ML_COMMENT(String),
+    STRING(String),
     FN_NULL_TYPE,
     EOF,
     ERROR,
@@ -72,6 +77,67 @@ pub fn read_next(s: &mut Vec<char>) -> LexToken {
         return LexToken::EOF;
     }
     let mut ret = String::new();
+    if s[0] == '/' {
+        if s.len() == 1 {}
+        else if s[1] == '/' { // hit a sl comment
+            s.remove(0);
+            s.remove(0);
+            let mut comment = String::new();
+            while s.len() != 0 && s[0] != '\n' {
+                comment.push(s[0]);
+                s.remove(0);
+            }
+            // return LexToken::SL_COMMENT(comment);
+            return read_next(s);
+        } else if s[1] == '*' { // hit a multiline comment
+            s.remove(0);
+            s.remove(0);
+            let mut comment = String::new();
+            while s.len() > 1 {
+                if s[0] == '*' && s[1] == '/' {
+                    s.remove(0);
+                    s.remove(0);
+                    break;
+                } else {
+                    comment.push(s[0]);
+                    s.remove(0);
+                }
+            }
+            // return LexToken::ML_COMMENT(comment);
+            return read_next(s);
+        }
+    }
+    if s[0] == '"' {
+        s.remove(0);
+        let mut is_escaped = false;
+        let mut ret: String = String::new();
+        while(s.len() != 0) {
+            if is_escaped {
+                ret.push(s[0]);
+                s.remove(0);
+                is_escaped = false;
+            } else if s[0] == '\\' {
+                if ESC_MEANING_CHARS.contains(&s[1]) {
+                    s.remove(0);
+                    let tmp = ESC_MEANING_CHARS.iter().position(|&x|  x == s[0]).expect("Escaped char meaning not found");
+                    s.remove(0);
+                    is_escaped = false;
+                    ret.push(ESC_MEANING_CHARS_MEANING[tmp]);
+                } else {
+                    is_escaped = false;
+                    ret.push(s[1]);
+                    s.remove(0);
+                    s.remove(0);
+                }
+            } else if s[0] == '"' {
+                s.remove(0);
+                return LexToken::STRING(ret);
+            } else {
+                ret.push(s[0]);
+                s.remove(0);
+            }
+        }
+    }
     let c = classify(s[0]);
     if c == CharClass::OP {
         let mut pnc = String::new();
@@ -101,34 +167,7 @@ pub fn read_next(s: &mut Vec<char>) -> LexToken {
         }
         return LexToken::PUNC(pnc);
     }
-    if s[0] == '/' {
-        if s.len() == 1 {}
-        else if s[1] == '/' { // hit a sl comment
-            s.remove(0);
-            s.remove(0);
-            let mut comment = String::new();
-            while s.len() != 0 && s[0] != '\n' {
-                comment.push(s[0]);
-                s.remove(0);
-            }
-            return LexToken::SL_COMMENT(comment);
-        } else if s[1] == '*' { // hit a multiline comment
-            s.remove(0);
-            s.remove(0);
-            let mut comment = String::new();
-            while s.len() > 1 {
-                if s[0] == '*' && s[1] == '/' {
-                    s.remove(0);
-                    s.remove(0);
-                    break;
-                } else {
-                    comment.push(s[0]);
-                    s.remove(0);
-                }
-            }
-            return LexToken::ML_COMMENT(comment);
-        }
-    }
+    
     if classify(s[0]) == CharClass::LETTER {
         while s.len() != 0 && classify(s[0]) == CharClass::LETTER || classify(s[0]) == CharClass::DIGIT   {
             ret.push(s[0]);
