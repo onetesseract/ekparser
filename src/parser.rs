@@ -20,6 +20,7 @@ pub enum Node {
     // Name, args
     Call(Box<Node>, Box<Vec<Node>>),
     Literal(Literal),
+    Return(Box<Node>),
     // other, messy stuff
     Null, //TODO: remove
 
@@ -44,6 +45,11 @@ pub struct File {
 
 const OPS: [&str; 14] = ["=", "||", "&&", /* now all 7 */ "<", ">", "<=", ">=", "==", "!=", /* all 10 */ "+", "-", /* 20s */ "*", "/", "%"];
 const OP_STRENGTH: [usize; 14] = [1, 2, 3, 7, 7, 7, 7, 7, 7, 10, 10, 20, 20, 20];
+
+fn parse_ret(f: &mut File) -> Node{
+    parser_helper::skip(lexer::LexToken::ID(String::from("return")), f);
+    return Node::Return(Box::new(parse_expression(f)));
+}
 
 fn parse_bool(f: &mut File) -> Node {
     f.index += 1;
@@ -70,7 +76,11 @@ fn parse_dec(f: &mut File) -> Node {
 fn maybe_dec(f: &mut File) -> bool {
     parser_helper::check_discriminant(&f.tokens[f.index], &lexer::LexToken::ID(String::new())) && f.tokens[f.index+1] == lexer::LexToken::PUNC(String::from(":"))
 }
-
+/*
+fn parse_ret(f: &mut File) -> Node {
+    parser_helper::skip(lexer::LexToken::ID(String::from("return")), f);
+}
+*/
 fn parse_if(f: &mut File) -> Node {
     parser_helper::skip(lexer::LexToken::ID(String::from("if")), f);
     // aaaa somehow parse conditions
@@ -161,6 +171,9 @@ fn pa_helper(f: &mut File) -> Node {
     }
     if f.tokens[f.index] == lexer::LexToken::ID(String::from("if")) {
         return parse_if(f);
+    }
+    if f.tokens[f.index] == lexer::LexToken::ID(String::from("return")) {
+        return parse_ret(f);
     }
     if maybe_dec(f) {
         return parse_dec(f);
